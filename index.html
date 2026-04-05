@@ -29,7 +29,7 @@
   .header-top { display: flex; align-items: center; justify-content: space-between; }
   .app-title { font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0.02em; }
   .app-title span { color: var(--accent); }
-  .btn-icon { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--white); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 6px rgba(0,0,0,0.08); transition: transform 0.15s; }
+  .btn-icon { height: 36px; padding: 0 12px; border-radius: 18px; border: none; background: var(--white); font-size: 12px; font-family: 'M PLUS Rounded 1c', sans-serif; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); transition: transform 0.15s; white-space: nowrap; }
   .btn-icon:active { transform: scale(0.93); }
   .filter-tabs { display: flex; gap: 6px; margin-top: 12px; overflow-x: auto; scrollbar-width: none; }
   .filter-tabs::-webkit-scrollbar { display: none; }
@@ -185,8 +185,8 @@
   <div class="header-top">
     <div class="app-title">Cli<span>po</span></div>
     <div style="display:flex;gap:8px;">
-      <button class="btn-icon" id="restoreBtn" title="復元">📥</button>
-      <button class="btn-icon" id="backupBtn" title="バックアップ">💾</button>
+      <button class="btn-icon" id="restoreBtn">📥 復元</button>
+      <button class="btn-icon" id="backupBtn">💾 バックアップ</button>
     </div>
     <input type="file" id="restoreInput" accept=".json" style="display:none;">
   </div>
@@ -202,7 +202,8 @@
   <div class="info-banner-icon">💡</div>
   <div class="info-banner-text">
     <strong>使い終わったクーポンは🗑ボタンで削除しましょう。</strong><br>
-    データはこのアプリ（ブラウザ）の中に保存されます。溜まりすぎると動作が重くなることがあります。定期的に整理してください。
+    データはこのアプリ（ブラウザ）の中に保存されます。溜まりすぎると動作が重くなることがあります。定期的に整理してください。<br>
+    また、スマホの買い替えやブラウザのデータ削除でデータが消えることがあります。💾 バックアップボタンで定期的に保存しておくことをおすすめします。
   </div>
 </div>
 
