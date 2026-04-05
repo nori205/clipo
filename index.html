@@ -151,6 +151,14 @@
   .btn-viewer-check:active { transform: scale(0.97); }
   .btn-viewer-check.checked { background: rgba(255,255,255,0.15); }
 
+  .expiry-alert { margin: 12px 16px 0; max-width: 480px; margin-left: auto; margin-right: auto; background: var(--warn-light); border: 1.5px solid var(--warn); border-radius: var(--radius-sm); padding: 12px 14px; display: none; }
+  .expiry-alert.show { display: block; }
+  .expiry-alert-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .expiry-alert-title { font-size: 13px; font-weight: 700; color: var(--warn); }
+  .expiry-alert-close { background: none; border: none; font-size: 16px; color: var(--warn); cursor: pointer; line-height: 1; padding: 0; }
+  .expiry-alert-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .expiry-alert-list li { font-size: 12px; color: var(--text); }
+
   .loading-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999; flex-direction: column; gap: 12px; }
   .loading-screen.hidden { display: none; }
   .loading-title { font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 24px; font-weight: 700; }
@@ -180,6 +188,14 @@
     <button class="tab" data-filter="expiring">期限近い</button>
     <button class="tab" data-filter="used">使用済み</button>
   </div>
+</div>
+
+<div class="expiry-alert" id="expiryAlert">
+  <div class="expiry-alert-header">
+    <span class="expiry-alert-title">⚠️ もうすぐ期限切れ</span>
+    <button class="expiry-alert-close" id="expiryAlertClose">✕</button>
+  </div>
+  <ul class="expiry-alert-list" id="expiryAlertList"></ul>
 </div>
 
 <div class="main" id="couponList"></div>
@@ -971,10 +987,28 @@ document.getElementById('restoreInput').addEventListener('change', async e => {
 // ════════════════════════════════════════
 // Init
 // ════════════════════════════════════════
+function showExpiryAlert() {
+  const soon = coupons.filter(c => !c.used && daysUntil(c.expire) !== null && daysUntil(c.expire) <= 3 && daysUntil(c.expire) >= 0);
+  if (!soon.length) return;
+  const list = document.getElementById('expiryAlertList');
+  list.innerHTML = soon.map(c => {
+    const d = daysUntil(c.expire);
+    const label = d === 0 ? '今日まで！' : `あと${d}日`;
+    const shop = c.shop ? `【${c.shop}】` : '';
+    return `<li>🎫 ${shop} ${label}（${formatDate(c.expire)}）</li>`;
+  }).join('');
+  document.getElementById('expiryAlert').classList.add('show');
+}
+
+document.getElementById('expiryAlertClose').addEventListener('click', () => {
+  document.getElementById('expiryAlert').classList.remove('show');
+});
+
 openDB().then(async () => {
   await loadAll();
   renderShopGrid();
   render();
+  showExpiryAlert();
   document.getElementById('loadingScreen').classList.add('hidden');
 }).catch(err => {
   console.error(err);
