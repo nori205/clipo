@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Clipo">
+<title>Clipo</title>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f8f7f5; --white: #fff; --text: #1a1a1a;
+    --text-muted: #888; --text-light: #bbb;
+    --accent: #2d6a4f; --accent-light: #e8f4ee; --accent-mid: #52b788;
+    --warn: #e76f51; --warn-light: #fdf0ec;
+    --used: #c8c8c8; --border: #ebebeb;
+    --shadow: 0 2px 16px rgba(0,0,0,0.07);
+    --radius: 16px; --radius-sm: 10px;
+  }
+  html, body { height: 100%; background: var(--bg); font-family: 'M PLUS Rounded 1c', sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+
+  .header { position: sticky; top: 0; z-index: 100; background: rgba(248,247,245,0.93); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 16px 20px 12px; border-bottom: 1px solid var(--border); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; }
+  .app-title { font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0.02em; }
+  .app-title span { color: var(--accent); }
+  .btn-icon { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--white); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 6px rgba(0,0,0,0.08); transition: transform 0.15s; }
+  .btn-icon:active { transform: scale(0.93); }
+  .filter-tabs { display: flex; gap: 6px; margin-top: 12px; overflow-x: auto; scrollbar-width: none; }
+  .filter-tabs::-webkit-scrollbar { display: none; }
+  .tab { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: transparent; font-size: 12px; font-family: 'M PLUS Rounded 1c', sans-serif; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.15s; }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .main { padding: 16px 16px 100px; max-width: 480px; margin: 0 auto; }
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--text-light); text-transform: uppercase; margin: 20px 0 10px 4px; }
+
+  .coupon-card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 10px; overflow: hidden; transition: transform 0.18s, opacity 0.3s; }
+  .coupon-card:active { transform: scale(0.985); }
+  .coupon-card.used { opacity: 0.5; }
+  .coupon-card.expiring-soon { border-left: 3.5px solid var(--warn); }
+  .coupon-card.expiring-soon .card-inner { background: linear-gradient(to right, var(--warn-light), var(--white) 70px); }
+  .card-inner { display: flex; align-items: stretch; min-height: 82px; }
+  .card-img { width: 78px; flex-shrink: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .card-img .shop-emoji { font-size: 32px; }
+  .card-img .no-img { font-size: 28px; opacity: 0.35; }
+  .card-body { flex: 1; padding: 12px 8px 12px 14px; display: flex; flex-direction: column; justify-content: center; gap: 3px; min-width: 0; }
+  .card-shop { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: var(--accent); }
+  .card-name { font-size: 13px; font-weight: 500; line-height: 1.4; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-used .card-name { color: var(--used); text-decoration: line-through; }
+  .card-expire { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .card-expire.soon { color: var(--warn); font-weight: 700; }
+  .card-expire.expired { color: var(--warn); font-weight: 700; }
+  .card-actions { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 10px 12px 10px 6px; flex-shrink: 0; }
+  .btn-check { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--border); background: transparent; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.18s; color: var(--text-muted); }
+  .btn-check.checked { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-delete { width: 28px; height: 28px; border-radius: 50%; border: none; background: transparent; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-light); transition: color 0.15s, background 0.15s; }
+  .btn-delete:active { color: var(--warn); background: var(--warn-light); }
+  .expiry-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-left: 5px; vertical-align: middle; }
+  .badge-soon { background: var(--warn-light); color: var(--warn); }
+  .badge-expired { background: #fee; color: #c0392b; }
+
+  .fab { position: fixed; bottom: 28px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 26px; border: none; box-shadow: 0 4px 20px rgba(45,106,79,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 200; transition: transform 0.18s; }
+  .fab:active { transform: scale(0.92); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 300; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--white); border-radius: 24px 24px 0 0; padding: 24px 20px 44px; width: 100%; max-width: 480px; margin: 0 auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1); max-height: 92vh; overflow-y: auto; }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 20px; }
+  .modal-title { font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+
+  .form-group { margin-bottom: 18px; }
+  .form-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; display: block; }
+  .form-input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: 'M PLUS Rounded 1c', sans-serif; color: var(--text); background: var(--bg); outline: none; transition: border-color 0.15s; }
+  .form-input:focus { border-color: var(--accent-mid); }
+
+  .shop-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .shop-btn { border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); padding: 10px 4px 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all 0.15s; font-family: 'M PLUS Rounded 1c', sans-serif; }
+  .shop-btn:active { transform: scale(0.95); }
+  .shop-btn.selected { border-color: var(--accent); background: var(--accent-light); }
+  .shop-btn .s-emoji { font-size: 22px; line-height: 1; }
+  .shop-btn .s-name { font-size: 10px; font-weight: 500; color: var(--text-muted); text-align: center; line-height: 1.2; }
+  .shop-btn.selected .s-name { color: var(--accent); font-weight: 700; }
+  .custom-shop-row { margin-top: 8px; display: none; }
+  .custom-shop-row.visible { display: block; }
+  .shop-add-btn { border: 1.5px dashed var(--accent-mid); border-radius: var(--radius-sm); background: transparent; padding: 10px 4px 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all 0.15s; font-family: 'M PLUS Rounded 1c', sans-serif; }
+  .shop-add-btn:active { transform: scale(0.95); background: var(--accent-light); }
+  .shop-add-btn .s-emoji { font-size: 22px; line-height: 1; }
+  .shop-add-btn .s-name { font-size: 10px; font-weight: 500; color: var(--accent-mid); text-align: center; line-height: 1.2; }
+  .shop-btn.custom { position: relative; }
+  .shop-btn.custom .del-shop { position: absolute; top: -5px; right: -5px; width: 16px; height: 16px; border-radius: 50%; background: #e76f51; color: #fff; font-size: 9px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; line-height: 1; font-weight: 700; }
+  .emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .ep-cat { font-size: 10px; font-weight: 700; color: var(--text-light); letter-spacing: 0.05em; margin: 10px 0 4px; display: block; }
+  .ep-btn { width: 40px; height: 40px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .ep-btn.selected { border-color: var(--accent); background: var(--accent-light); }
+  .ep-btn:active { transform: scale(0.9); }
+
+  .img-upload-area { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 20px; text-align: center; cursor: pointer; background: var(--bg); position: relative; transition: border-color 0.15s; }
+  .img-upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .img-preview { width: 100%; max-height: 160px; object-fit: contain; border-radius: 8px; display: none; }
+  .img-upload-icon { font-size: 26px; margin-bottom: 4px; }
+  .img-upload-text { font-size: 12px; color: var(--text-muted); }
+  .img-delete-btn { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.5); color: #fff; border: none; font-size: 14px; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 10; line-height: 1; }
+  .img-delete-btn.visible { display: flex; }
+
+  .ocr-status { margin-top: 8px; padding: 9px 13px; border-radius: var(--radius-sm); font-size: 12px; line-height: 1.6; display: none; }
+  .ocr-status.scanning { background: #fff8e1; color: #e65100; display: block; }
+  .ocr-status.found { background: var(--accent-light); color: var(--accent); display: block; }
+  .ocr-status.notfound { background: #f5f5f5; color: var(--text-muted); display: block; }
+  .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #e65100; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .form-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .form-label-row .form-label { margin-bottom: 0; }
+  .auto-badge { font-size: 10px; background: var(--accent-light); color: var(--accent); padding: 2px 8px; border-radius: 10px; font-weight: 700; display: none; }
+  .quick-dates { display: flex; gap: 6px; flex-wrap: wrap; }
+  .qd-btn { flex: 1; min-width: 60px; padding: 9px 4px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--bg); font-size: 11px; font-family: 'M PLUS Rounded 1c', sans-serif; font-weight: 500; color: var(--text-muted); cursor: pointer; text-align: center; transition: all 0.15s; }
+  .qd-btn.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .manual-toggle { font-size: 11px; color: var(--accent-mid); text-decoration: underline; cursor: pointer; margin-top: 6px; display: inline-block; }
+  .manual-row { display: none; margin-top: 8px; }
+  .manual-row.visible { display: block; }
+
+  .btn-save { width: 100%; padding: 15px; border-radius: var(--radius-sm); border: none; background: var(--accent); color: #fff; font-size: 15px; font-weight: 700; font-family: 'M PLUS Rounded 1c', sans-serif; cursor: pointer; margin-top: 4px; transition: background 0.15s, transform 0.12s; }
+  .btn-save:active { transform: scale(0.98); background: #235c42; }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--text-light); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; line-height: 1.9; }
+
+  .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 500; opacity: 0; transition: all 0.25s; z-index: 500; white-space: nowrap; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Loading screen */
+  /* Fullscreen viewer */
+  .viewer { position: fixed; inset: 0; background: #000; z-index: 600; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.22s; }
+  .viewer.open { opacity: 1; pointer-events: all; }
+  .viewer-header { display: flex; align-items: center; justify-content: space-between; padding: 52px 18px 12px; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); position: absolute; top: 0; left: 0; right: 0; z-index: 2; }
+  .viewer-shop { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.7); }
+  .viewer-name { font-size: 15px; font-weight: 500; color: #fff; margin-top: 2px; }
+  .viewer-close { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .viewer-img-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 80px 0 100px; }
+  .viewer-img-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
+  .viewer-no-img { color: rgba(255,255,255,0.3); font-size: 60px; }
+  .viewer-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 20px 44px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .viewer-expire { font-size: 12px; color: rgba(255,255,255,0.6); }
+  .viewer-expire.soon { color: #f4a261; font-weight: 700; }
+  .btn-viewer-check { flex: 1; padding: 14px; border-radius: 12px; border: none; background: #2d6a4f; color: #fff; font-size: 15px; font-weight: 700; font-family: 'M PLUS Rounded 1c', sans-serif; cursor: pointer; transition: background 0.15s, transform 0.12s; }
+  .btn-viewer-check:active { transform: scale(0.97); }
+  .btn-viewer-check.checked { background: rgba(255,255,255,0.15); }
+
+  .loading-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999; flex-direction: column; gap: 12px; }
+  .loading-screen.hidden { display: none; }
+  .loading-title { font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 24px; font-weight: 700; }
+  .loading-title span { color: var(--accent); font-style: italic; }
+  .loading-sub { font-size: 12px; color: var(--text-light); }
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-title">Cli<span>po</span></div>
+  <div class="loading-sub">読み込み中…</div>
+</div>
+
+<div class="header">
+  <div class="header-top">
+    <div class="app-title">Cli<span>po</span></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-icon" id="restoreBtn" title="復元">📥</button>
+      <button class="btn-icon" id="backupBtn" title="バックアップ">💾</button>
+    </div>
+    <input type="file" id="restoreInput" accept=".json" style="display:none;">
+  </div>
+  <div class="filter-tabs">
+    <button class="tab active" data-filter="all">すべて</button>
+    <button class="tab" data-filter="active">未使用</button>
+    <button class="tab" data-filter="expiring">期限近い</button>
+    <button class="tab" data-filter="used">使用済み</button>
+  </div>
+</div>
+
+<div class="main" id="couponList"></div>
+<button class="fab" id="addBtn">＋</button>
+
+<!-- Add Modal -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">クーポンを追加</div>
+
+    <div class="form-group">
+      <label class="form-label">🏪 お店</label>
+      <div class="shop-grid" id="shopGrid">
+        <!-- dynamically rendered -->
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">📸 スクリーンショット</label>
+      <div class="img-upload-area">
+        <input type="file" accept="image/*" id="imgInput">
+        <button class="img-delete-btn" id="imgDeleteBtn" type="button">✕</button>
+        <img class="img-preview" id="imgPreview" alt="">
+        <div id="uploadPlaceholder">
+          <div class="img-upload-icon">🖼️</div>
+          <div class="img-upload-text">タップして画像を選択</div>
+        </div>
+      </div>
+      <div class="ocr-status" id="ocrStatus"></div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label-row">
+        <label class="form-label">📅 有効期限</label>
+        <span class="auto-badge" id="autoBadge">✨ 自動検出</span>
+      </div>
+      <div class="quick-dates">
+        <button class="qd-btn" data-days="7">1週間後</button>
+        <button class="qd-btn" data-days="14">2週間後</button>
+        <button class="qd-btn" data-days="30">1ヶ月後</button>
+        <button class="qd-btn" data-days="60">2ヶ月後</button>
+        <button class="qd-btn" data-days="90">3ヶ月後</button>
+      </div>
+      <span class="manual-toggle" id="manualToggle">日付を直接入力する</span>
+      <div class="manual-row" id="manualRow">
+        <input class="form-input" id="expireInput" type="date">
+      </div>
+    </div>
+
+    <button class="btn-save" id="saveBtn">保存する</button>
+  </div>
+</div>
+
+<!-- Shop Register Modal -->
+<div class="modal-overlay" id="shopRegModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">お店を追加</div>
+    <div class="form-group">
+      <label class="form-label">🏪 お店名</label>
+      <input class="form-input" id="newShopName" type="text" placeholder="例：マクドナルド">
+    </div>
+    <div class="form-group">
+      <label class="form-label">😊 アイコン</label>
+      <span class="ep-cat">🍔 食べ物</span>
+      <div class="emoji-picker">
+        <button class="ep-btn" data-emoji="🍔">🍔</button><button class="ep-btn" data-emoji="🍕">🍕</button><button class="ep-btn" data-emoji="🍜">🍜</button><button class="ep-btn" data-emoji="🍣">🍣</button><button class="ep-btn" data-emoji="🍱">🍱</button><button class="ep-btn" data-emoji="🥗">🥗</button><button class="ep-btn" data-emoji="🍰">🍰</button><button class="ep-btn" data-emoji="🧁">🧁</button><button class="ep-btn" data-emoji="🍫">🍫</button><button class="ep-btn" data-emoji="🍿">🍿</button><button class="ep-btn" data-emoji="🍗">🍗</button><button class="ep-btn" data-emoji="🥪">🥪</button>
+      </div>
+      <span class="ep-cat">☕ ドリンク</span>
+      <div class="emoji-picker">
+        <button class="ep-btn" data-emoji="☕">☕</button><button class="ep-btn" data-emoji="🧃">🧃</button><button class="ep-btn" data-emoji="🧋">🧋</button><button class="ep-btn" data-emoji="🍺">🍺</button><button class="ep-btn" data-emoji="🍹">🍹</button><button class="ep-btn" data-emoji="🥤">🥤</button>
+      </div>
+      <span class="ep-cat">🏪 お店・その他</span>
+      <div class="emoji-picker">
+        <button class="ep-btn" data-emoji="🏪">🏪</button><button class="ep-btn" data-emoji="🏬">🏬</button><button class="ep-btn" data-emoji="🎁">🎁</button><button class="ep-btn" data-emoji="💄">💄</button><button class="ep-btn" data-emoji="👗">👗</button><button class="ep-btn" data-emoji="🎮">🎮</button><button class="ep-btn" data-emoji="📚">📚</button><button class="ep-btn" data-emoji="💊">💊</button><button class="ep-btn" data-emoji="🐾">🐾</button><button class="ep-btn" data-emoji="✂️">✂️</button><button class="ep-btn" data-emoji="🚗">🚗</button><button class="ep-btn" data-emoji="⭐">⭐</button>
+      </div>
+    </div>
+    <button class="btn-save" id="saveShopBtn">追加する</button>
+    <button class="btn-save" style="background:transparent;color:var(--text-muted);margin-top:8px;" id="cancelShopBtn">キャンセル</button>
+  </div>
+</div>
+
+
+
+<div class="toast" id="toast"></div>
+
+<!-- Fullscreen Viewer -->
+<div class="viewer" id="viewer">
+  <div class="viewer-header">
+    <div>
+      <div class="viewer-shop" id="viewerShop"></div>
+      <div class="viewer-name" id="viewerName"></div>
+    </div>
+    <button class="viewer-close" id="viewerClose">✕</button>
+  </div>
+  <div class="viewer-img-wrap" id="viewerImgWrap"></div>
+  <div class="viewer-footer">
+    <div class="viewer-expire" id="viewerExpire"></div>
+    <button class="btn-viewer-check" id="viewerCheckBtn">✓ 使用済みにする</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script>
+// ════════════════════════════════════════
+// IndexedDB ストレージ
+// ════════════════════════════════════════
+const DB_NAME = 'coupon_db', DB_VER = 1;
+const STORE_META = 'meta', STORE_IMGS = 'images';
+let db;
+
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(STORE_META)) d.createObjectStore(STORE_META, { keyPath: 'id' });
+      if (!d.objectStoreNames.contains(STORE_IMGS)) d.createObjectStore(STORE_IMGS);
+    };
+    req.onsuccess = e => { db = e.target.result; res(db); };
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbGet(store, key) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbPut(store, value, key) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = key !== undefined ? tx.objectStore(store).put(value, key) : tx.objectStore(store).put(value);
+    req.onsuccess = () => res();
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbDelete(store, key) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).delete(key);
+    req.onsuccess = () => res();
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbGetAll(store) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+// ════════════════════════════════════════
+// 画像圧縮
+// ════════════════════════════════════════
+function compressImage(file, maxW = 900, quality = 0.82) {
+  return new Promise(res => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width: w, height: h } = img;
+      if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      res(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = url;
+  });
+}
+
+// ════════════════════════════════════════
+// State
+// ════════════════════════════════════════
+const SHOPS_EMOJI = { 'ローソン':'🏪','ファミマ':'🏬','セブン':'🟠','スタバ':'☕','ミスド':'🍩','サーティワン':'🍦' };
+function shopEmoji(name) {
+  if (!name) return null;
+  for (const [k, v] of Object.entries(SHOPS_EMOJI)) {
+    if (name.includes(k) || k.includes(name)) return v;
+  }
+  return null;
+}
+
+let coupons = [];   // metadata only (no img)
+let currentFilter = 'all';
+let currentImgData = null;  // compressed base64
+let selectedDate = null;
+let selectedShop = null;
+let isOtherShop = false;
+
+// ════════════════════════════════════════
+// Persistence
+// ════════════════════════════════════════
+async function loadAll() {
+  coupons = await dbGetAll(STORE_META);
+  coupons.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+async function saveCoupon(coupon, imgData) {
+  await dbPut(STORE_META, coupon);
+  if (imgData) await dbPut(STORE_IMGS, imgData, coupon.id);
+}
+
+async function deleteCoupon(id) {
+  await dbDelete(STORE_META, id);
+  await dbDelete(STORE_IMGS, id);
+  coupons = coupons.filter(c => c.id !== id);
+}
+
+async function getImg(id) {
+  return await dbGet(STORE_IMGS, id);
+}
+
+// ════════════════════════════════════════
+// Utils
+// ════════════════════════════════════════
+function daysUntil(d) {
+  if (!d) return null;
+  const t = new Date(); t.setHours(0,0,0,0);
+  const x = new Date(d); x.setHours(0,0,0,0);
+  return Math.floor((x - t) / 86400000);
+}
+function formatDate(d) {
+  if (!d) return '';
+  const x = new Date(d);
+  return `${x.getFullYear()}年${x.getMonth()+1}月${x.getDate()}日`;
+}
+function toISO(d) { return d.toISOString().split('T')[0]; }
+function addDays(n) { const d = new Date(); d.setDate(d.getDate()+n); return toISO(d); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ════════════════════════════════════════
+// OCR前処理（グレースケール＋コントラスト強化）
+// ════════════════════════════════════════
+function preprocessForOCR(file) {
+  return new Promise(res => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const MAX = 1500;
+      let { width: w, height: h } = img;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const d = ctx.getImageData(0, 0, w, h);
+      for (let i = 0; i < d.data.length; i += 4) {
+        const gray = 0.299 * d.data[i] + 0.587 * d.data[i+1] + 0.114 * d.data[i+2];
+        const val = Math.min(255, Math.max(0, (gray - 128) * 1.5 + 128));
+        d.data[i] = d.data[i+1] = d.data[i+2] = val;
+      }
+      ctx.putImageData(d, 0, 0);
+      res(canvas.toDataURL('image/png'));
+    };
+    img.src = url;
+  });
+}
+
+// ════════════════════════════════════════
+// OCR
+// ════════════════════════════════════════
+function extractDate(text) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const pats = [
+    /(\d{4})[年\/\-．.](\d{1,2})[月\/\-．.](\d{1,2})日?/g,
+    /有効期限[：:\s]*(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/g,
+    /期限[：:\s]*(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/g,
+    /(\d{2})[\/\.](\d{2})[\/\.](\d{2})/g,
+    /(\d{1,2})月(\d{1,2})日/g,
+  ];
+  const cands = [];
+  for (const p of pats) {
+    let m; p.lastIndex = 0;
+    while ((m = p.exec(text)) !== null) {
+      let yr, mo, dy;
+      if (m.length === 4) {
+        yr = parseInt(m[1]); if (yr < 100) yr += 2000;
+        mo = parseInt(m[2]); dy = parseInt(m[3]);
+      } else {
+        yr = today.getFullYear(); mo = parseInt(m[1]); dy = parseInt(m[2]);
+      }
+      if (mo<1||mo>12||dy<1||dy>31) continue;
+      const d = new Date(yr, mo-1, dy);
+      if (isNaN(d)) continue;
+      const diff = Math.floor((d-today)/86400000);
+      if (diff >= -3 && diff <= 730) cands.push({d, diff});
+    }
+  }
+  if (!cands.length) return null;
+  cands.sort((a,b) => a.diff - b.diff);
+  return toISO((cands.find(c => c.diff >= 0) || cands[0]).d);
+}
+
+async function runOCR(imageData) {
+  const st = document.getElementById('ocrStatus');
+  st.className = 'ocr-status scanning';
+  st.innerHTML = '<span class="spinner"></span>期限日を読み取り中…';
+  try {
+    const r = await Tesseract.recognize(imageData, 'jpn+eng', {});
+    const date = extractDate(r.data.text);
+    if (date) {
+      setDate(date, true);
+      st.className = 'ocr-status found';
+      st.innerHTML = `✅ 期限を自動検出：<strong>${formatDate(date)}</strong>`;
+      document.getElementById('autoBadge').style.display = 'inline-block';
+    } else {
+      st.className = 'ocr-status notfound';
+      st.innerHTML = '📅 日付を読み取れませんでした。下から選択してください';
+      showManualRow();
+    }
+  } catch {
+    st.className = 'ocr-status notfound';
+    st.innerHTML = '📅 読み取り失敗。日付を選択してください';
+    showManualRow();
+  }
+}
+
+function showManualRow() {
+  document.getElementById('manualRow').classList.add('visible');
+  document.getElementById('manualToggle').style.display = 'none';
+}
+
+// ════════════════════════════════════════
+// Date
+// ════════════════════════════════════════
+function setDate(dateStr, fromOCR=false) {
+  selectedDate = dateStr;
+  document.querySelectorAll('.qd-btn').forEach(b => {
+    b.classList.toggle('selected', addDays(parseInt(b.dataset.days)) === dateStr);
+  });
+  document.getElementById('expireInput').value = dateStr;
+  if (!fromOCR) document.getElementById('autoBadge').style.display = 'none';
+}
+
+document.querySelectorAll('.qd-btn').forEach(b => {
+  b.addEventListener('click', () => { setDate(addDays(parseInt(b.dataset.days))); document.getElementById('ocrStatus').className='ocr-status'; });
+});
+document.getElementById('manualToggle').addEventListener('click', () => {
+  document.getElementById('manualRow').classList.toggle('visible');
+});
+document.getElementById('expireInput').addEventListener('change', e => {
+  if (e.target.value) { setDate(e.target.value); document.querySelectorAll('.qd-btn').forEach(b => b.classList.remove('selected')); }
+});
+
+// ════════════════════════════════════════
+// Shop buttons (preset + custom)
+// ════════════════════════════════════════
+const PRESET_SHOPS = [
+  { name: 'ローソン',     icon: 'fa-store',     color: '#0671cc' },
+  { name: 'ファミマ',     icon: 'fa-store',     color: '#0a9b47' },
+  { name: 'セブン',       icon: 'fa-store',     color: '#f08407' },
+  { name: 'スタバ',       icon: 'fa-mug-hot',   color: '#006c40' },
+  { name: 'ミスド',       icon: 'fa-circle-dot',color: '#d62b2b' },
+  { name: 'サーティワン', icon: 'fa-ice-cream', color: '#e83c87' },
+];
+
+let customShops = JSON.parse(localStorage.getItem('custom_shops') || '[]');
+
+function saveCustomShops() { localStorage.setItem('custom_shops', JSON.stringify(customShops)); }
+
+function shopIconHTML(shop, size = 32) {
+  const all = [...PRESET_SHOPS, ...customShops];
+  const found = all.find(s => shop && (shop.includes(s.name) || s.name.includes(shop)));
+  if (!found) return `<span style="font-size:${size}px;opacity:0.35;">🎫</span>`;
+  if (found.icon) {
+    return `<div style="width:${size*1.5}px;height:${size*1.5}px;border-radius:50%;background:${found.color};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15);"><i class="fa-solid ${found.icon}" style="color:#fff;font-size:${size*0.55}px;"></i></div>`;
+  }
+  return `<span style="font-size:${size}px;">${found.emoji}</span>`;
+}
+
+function renderShopGrid() {
+  const grid = document.getElementById('shopGrid');
+  grid.innerHTML = '';
+
+  const allShops = [...PRESET_SHOPS, ...customShops];
+  allShops.forEach(shop => {
+    const btn = document.createElement('button');
+    btn.className = 'shop-btn' + (shop.custom ? ' custom' : '');
+    btn.dataset.shop = shop.name;
+
+    const iconHTML = shop.icon
+      ? `<div style="width:36px;height:36px;border-radius:50%;background:${shop.color};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.15);"><i class="fa-solid ${shop.icon}" style="color:#fff;font-size:15px;"></i></div>`
+      : `<span class="s-emoji">${shop.emoji}</span>`;
+
+    btn.innerHTML = `${iconHTML}<span class="s-name">${shop.name}</span>`;
+
+    if (shop.custom) {
+      const del = document.createElement('button');
+      del.className = 'del-shop';
+      del.textContent = '×';
+      del.addEventListener('click', e => {
+        e.stopPropagation();
+        if (confirm(`「${shop.name}」を削除しますか？`)) {
+          customShops = customShops.filter(s => s.name !== shop.name);
+          saveCustomShops();
+          renderShopGrid();
+        }
+      });
+      btn.appendChild(del);
+    }
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.shop-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedShop = shop.name;
+      isOtherShop = false;
+    });
+    grid.appendChild(btn);
+  });
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'shop-add-btn';
+  addBtn.innerHTML = `<span class="s-emoji">➕</span><span class="s-name">追加</span>`;
+  addBtn.addEventListener('click', () => {
+    document.getElementById('newShopName').value = '';
+    document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('selected'));
+    selectedNewEmoji = '⭐';
+    document.getElementById('shopRegModal').classList.add('open');
+  });
+  grid.appendChild(addBtn);
+}
+
+// Emoji picker
+let selectedNewEmoji = '⭐';
+document.querySelectorAll('.ep-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedNewEmoji = btn.dataset.emoji;
+  });
+});
+
+document.getElementById('saveShopBtn').addEventListener('click', () => {
+  const name = document.getElementById('newShopName').value.trim();
+  if (!name) { showToast('お店名を入力してください'); return; }
+  if ([...PRESET_SHOPS, ...customShops].some(s => s.name === name)) { showToast('同じ名前のお店がすでにあります'); return; }
+  customShops.push({ name, emoji: selectedNewEmoji, custom: true });
+  saveCustomShops();
+  renderShopGrid();
+  document.getElementById('shopRegModal').classList.remove('open');
+  showToast(`🏪 「${name}」を追加しました`);
+});
+
+document.getElementById('cancelShopBtn').addEventListener('click', () => {
+  document.getElementById('shopRegModal').classList.remove('open');
+});
+document.getElementById('shopRegModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('shopRegModal')) document.getElementById('shopRegModal').classList.remove('open');
+});
+
+// ════════════════════════════════════════
+// Image upload + compress + OCR
+// ════════════════════════════════════════
+document.getElementById('imgInput').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // Compress first
+  currentImgData = await compressImage(file);
+
+  // Show preview
+  const p = document.getElementById('imgPreview');
+  p.src = currentImgData; p.style.display = 'block';
+  document.getElementById('uploadPlaceholder').style.display = 'none';
+  document.getElementById('imgDeleteBtn').classList.add('visible');
+
+  // OCR は非同期でバックグラウンド実行（保存をブロックしない）
+  preprocessForOCR(file).then(ocrImg => runOCR(ocrImg)).catch(() => {
+    document.getElementById('ocrStatus').className = 'ocr-status notfound';
+    document.getElementById('ocrStatus').innerHTML = '📅 日付を選択してください';
+  });
+});
+
+document.getElementById('imgDeleteBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  currentImgData = null;
+  const p = document.getElementById('imgPreview');
+  p.src = ''; p.style.display = 'none';
+  document.getElementById('uploadPlaceholder').style.display = 'block';
+  document.getElementById('imgDeleteBtn').classList.remove('visible');
+  document.getElementById('ocrStatus').className = 'ocr-status';
+  document.getElementById('autoBadge').style.display = 'none';
+  document.getElementById('imgInput').value = '';
+});
+
+// ════════════════════════════════════════
+// Save
+// ════════════════════════════════════════
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const shop = selectedShop || '';
+  const name = '';
+
+  // お店か画像があれば保存OK
+  if (!currentImgData && !shop) { showToast('お店か画像を選択してください'); return; }
+
+  const expire = selectedDate || document.getElementById('expireInput').value || null;
+  const coupon = { id: Date.now().toString(), shop, name, expire, hasImg: !!currentImgData, used: false, createdAt: new Date().toISOString() };
+
+  await saveCoupon(coupon, currentImgData);
+  coupons.unshift(coupon);
+  render();
+
+  resetModal();
+  document.getElementById('addModal').classList.remove('open');
+  showToast('🎫 クーポンを追加しました');
+});
+
+function resetModal() {
+  document.querySelectorAll('.shop-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('imgPreview').src = '';
+  document.getElementById('imgPreview').style.display = 'none';
+  document.getElementById('uploadPlaceholder').style.display = 'block';
+  document.getElementById('imgDeleteBtn').classList.remove('visible');
+  document.getElementById('ocrStatus').className = 'ocr-status';
+  document.getElementById('autoBadge').style.display = 'none';
+  document.getElementById('manualRow').classList.remove('visible');
+  document.getElementById('manualToggle').style.display = 'inline-block';
+  document.getElementById('expireInput').value = '';
+  document.querySelectorAll('.qd-btn').forEach(b => b.classList.remove('selected'));
+  currentImgData = null; selectedDate = null; selectedShop = null; isOtherShop = false;
+}
+
+// ════════════════════════════════════════
+// Render
+// ════════════════════════════════════════
+function render() {
+  const list = document.getElementById('couponList');
+  list.innerHTML = '';
+  let items = [...coupons];
+  if (currentFilter === 'active') items = items.filter(c => !c.used);
+  else if (currentFilter === 'expiring') items = items.filter(c => !c.used && daysUntil(c.expire) !== null && daysUntil(c.expire) <= 7 && daysUntil(c.expire) >= 0);
+  else if (currentFilter === 'used') items = items.filter(c => c.used);
+
+  items.sort((a,b) => {
+    if (a.used !== b.used) return a.used ? 1 : -1;
+    if (!a.expire && !b.expire) return 0;
+    if (!a.expire) return 1; if (!b.expire) return -1;
+    return new Date(a.expire) - new Date(b.expire);
+  });
+
+  if (!items.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">${currentFilter==='expiring'?'🎉':'🎫'}</div><div class="empty-text">${currentFilter==='expiring'?'期限が近いクーポンはありません':'クーポンをまだ追加していません<br>＋ボタンで追加してみましょう'}</div></div>`;
+    return;
+  }
+
+  const expiring = items.filter(c => !c.used && daysUntil(c.expire) !== null && daysUntil(c.expire) <= 7 && daysUntil(c.expire) >= 0);
+  const normal   = items.filter(c => !c.used && !expiring.includes(c));
+  const used     = items.filter(c => c.used);
+
+  if (expiring.length && currentFilter !== 'used') { addLbl('⚠️ 期限が近いクーポン', list); expiring.forEach(c => list.appendChild(makeCard(c))); }
+  if (normal.length && currentFilter !== 'used' && currentFilter !== 'expiring') { if (expiring.length) addLbl('クーポン一覧', list); normal.forEach(c => list.appendChild(makeCard(c))); }
+  if (currentFilter === 'expiring' && !expiring.length) list.innerHTML = `<div class="empty"><div class="empty-icon">🎉</div><div class="empty-text">期限が近いクーポンはありません</div></div>`;
+  if (used.length && (currentFilter === 'all' || currentFilter === 'used')) { addLbl('✅ 使用済み', list); used.forEach(c => list.appendChild(makeCard(c))); }
+}
+
+function addLbl(txt, p) { const d=document.createElement('div'); d.className='section-label'; d.textContent=txt; p.appendChild(d); }
+
+function makeCard(c) {
+  const days = daysUntil(c.expire);
+  const isSoon = days !== null && days <= 7 && days >= 0 && !c.used;
+  const isExpired = days !== null && days < 0 && !c.used;
+
+  const card = document.createElement('div');
+  card.className = 'coupon-card'+(c.used?' used':'')+(isSoon?' expiring-soon':'');
+
+  let expText='', expClass='', badge='';
+  if (c.expire) {
+    if (isExpired) { expText=`期限切れ（${formatDate(c.expire)}）`; expClass='expired'; badge=`<span class="expiry-badge badge-expired">期限切れ</span>`; }
+    else if (isSoon) { expText=days===0?'今日まで！':`あと${days}日（${formatDate(c.expire)}）`; expClass='soon'; badge=`<span class="expiry-badge badge-soon">あと${days}日</span>`; }
+    else { expText=`〜 ${formatDate(c.expire)}`; }
+  }
+
+  const imgAreaPlaceholder = shopIconHTML(c.shop, 28);
+
+  card.innerHTML = `
+    <div class="card-inner${c.used?' card-used':''}">
+      <div class="card-img" id="img-${c.id}">${imgAreaPlaceholder}</div>
+      <div class="card-body">
+        ${c.shop?`<div class="card-shop">${esc(c.shop)}</div>`:''}
+        <div class="card-name">${esc(c.name||'クーポン')}${badge}</div>
+        ${expText?`<div class="card-expire ${expClass}">${expText}</div>`:''}
+      </div>
+      <div class="card-actions">
+        <button class="btn-check${c.used?' checked':''}">✓</button>
+        ${c.used?`<button class="btn-delete">🗑</button>`:''}
+      </div>
+    </div>`;
+
+  // Lazy load image from IndexedDB
+  if (c.hasImg) {
+    getImg(c.id).then(data => {
+      if (data) {
+        const el = document.getElementById(`img-${c.id}`);
+        if (el) el.innerHTML = `<img src="${data}" alt="">`;
+      }
+    });
+  }
+
+  card.style.cursor = 'pointer';
+  card.addEventListener('click', () => openViewer(c));
+
+  card.querySelector('.btn-check').addEventListener('click', async e => {
+    e.stopPropagation();
+    const i = coupons.findIndex(x => x.id===c.id);
+    if (i !== -1) {
+      coupons[i].used = !coupons[i].used;
+      await dbPut(STORE_META, coupons[i]);
+      render();
+      showToast(coupons[i].used?'✅ 使用済みにしました':'↩️ 未使用に戻しました');
+    }
+  });
+  const del = card.querySelector('.btn-delete');
+  if (del) del.addEventListener('click', async e => {
+    e.stopPropagation();
+    if (confirm('このクーポンを削除しますか？')) {
+      await deleteCoupon(c.id);
+      render();
+      showToast('🗑 削除しました');
+    }
+  });
+  return card;
+}
+
+// ════════════════════════════════════════
+// Fullscreen Viewer
+// ════════════════════════════════════════
+let viewerCouponId = null;
+
+async function openViewer(c) {
+  viewerCouponId = c.id;
+  document.getElementById('viewerShop').textContent = c.shop || '';
+  document.getElementById('viewerName').textContent = c.name || 'クーポン';
+
+  // expire text
+  const days = daysUntil(c.expire);
+  const expEl = document.getElementById('viewerExpire');
+  if (c.expire) {
+    if (days < 0) { expEl.textContent = '期限切れ'; expEl.className = 'viewer-expire soon'; }
+    else if (days === 0) { expEl.textContent = '今日まで！'; expEl.className = 'viewer-expire soon'; }
+    else if (days <= 7) { expEl.textContent = `あと${days}日（${formatDate(c.expire)}）`; expEl.className = 'viewer-expire soon'; }
+    else { expEl.textContent = `〜 ${formatDate(c.expire)}`; expEl.className = 'viewer-expire'; }
+  } else {
+    expEl.textContent = ''; expEl.className = 'viewer-expire';
+  }
+
+  // check button state
+  const chkBtn = document.getElementById('viewerCheckBtn');
+  chkBtn.textContent = c.used ? '↩️ 未使用に戻す' : '✓ 使用済みにする';
+  chkBtn.className = 'btn-viewer-check' + (c.used ? ' checked' : '');
+
+  // image
+  const wrap = document.getElementById('viewerImgWrap');
+  wrap.innerHTML = '';
+  if (c.hasImg) {
+    const data = await getImg(c.id);
+    if (data) {
+      const img = document.createElement('img');
+      img.src = data; wrap.appendChild(img);
+    } else {
+      wrap.innerHTML = shopIconHTML(c.shop, 50);
+    }
+  } else {
+    wrap.innerHTML = shopIconHTML(c.shop, 50);
+  }
+
+  document.getElementById('viewer').classList.add('open');
+  // Prevent scroll
+  document.body.style.overflow = 'hidden';
+}
+
+function shopEmojiFor(name) {
+  if (!name) return '🎫';
+  const all = [...PRESET_SHOPS, ...customShops];
+  const found = all.find(s => name.includes(s.name) || s.name.includes(name));
+  return found ? found.emoji : '🎫';
+}
+
+function closeViewer() {
+  document.getElementById('viewer').classList.remove('open');
+  document.body.style.overflow = '';
+  viewerCouponId = null;
+}
+
+document.getElementById('viewerClose').addEventListener('click', closeViewer);
+
+document.getElementById('viewerCheckBtn').addEventListener('click', async () => {
+  const i = coupons.findIndex(x => x.id === viewerCouponId);
+  if (i !== -1) {
+    coupons[i].used = !coupons[i].used;
+    await dbPut(STORE_META, coupons[i]);
+    render();
+    const chkBtn = document.getElementById('viewerCheckBtn');
+    chkBtn.textContent = coupons[i].used ? '↩️ 未使用に戻す' : '✓ 使用済みにする';
+    chkBtn.className = 'btn-viewer-check' + (coupons[i].used ? ' checked' : '');
+    showToast(coupons[i].used ? '✅ 使用済みにしました' : '↩️ 未使用に戻しました');
+  }
+});
+
+// ════════════════════════════════════════
+// Filters & Modals
+// ════════════════════════════════════════
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active'); currentFilter = t.dataset.filter; render();
+}));
+
+document.getElementById('addBtn').addEventListener('click', () => document.getElementById('addModal').classList.add('open'));
+document.getElementById('addModal').addEventListener('click', e => { if (e.target===document.getElementById('addModal')) { resetModal(); document.getElementById('addModal').classList.remove('open'); }});
+
+// ════════════════════════════════════════
+// バックアップ・復元
+// ════════════════════════════════════════
+document.getElementById('backupBtn').addEventListener('click', async () => {
+  try {
+    showToast('📦 バックアップを準備中…');
+    const allMeta = await dbGetAll(STORE_META);
+    const allImgs = {};
+    for (const c of allMeta) {
+      const img = await getImg(c.id);
+      if (img) allImgs[c.id] = img;
+    }
+    const data = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), coupons: allMeta, images: allImgs });
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().slice(0,10);
+    a.href = url; a.download = `Clipoバックアップ_${date}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('💾 バックアップ完了！');
+  } catch(e) {
+    showToast('❌ バックアップに失敗しました');
+  }
+});
+
+document.getElementById('restoreBtn').addEventListener('click', () => {
+  document.getElementById('restoreInput').click();
+});
+
+document.getElementById('restoreInput').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data.coupons || !Array.isArray(data.coupons)) throw new Error('形式が違います');
+
+    const count = data.coupons.length;
+    if (!confirm(`${count}件のクーポンを復元します。\n現在のデータに追加されます。よろしいですか？`)) return;
+
+    showToast('📥 復元中…');
+    for (const c of data.coupons) {
+      // IDが重複する場合はスキップ
+      const existing = await dbGet(STORE_META, c.id);
+      if (existing) continue;
+      await dbPut(STORE_META, c);
+      if (data.images && data.images[c.id]) {
+        await dbPut(STORE_IMGS, data.images[c.id], c.id);
+      }
+    }
+    await loadAll();
+    render();
+    showToast(`✅ ${count}件を復元しました！`);
+  } catch(e) {
+    showToast('❌ 復元に失敗しました。ファイルを確認してください');
+  }
+});
+
+// ════════════════════════════════════════
+// Init
+// ════════════════════════════════════════
+openDB().then(async () => {
+  await loadAll();
+  renderShopGrid();
+  render();
+  document.getElementById('loadingScreen').classList.add('hidden');
+}).catch(err => {
+  console.error(err);
+  document.getElementById('loadingScreen').classList.add('hidden');
+  showToast('初期化エラーが発生しました');
+});
+</script>
+</body>
+</html>
