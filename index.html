@@ -567,6 +567,10 @@ function extractDate(text) {
     .replace(/[Oo０]/g, '0').replace(/[lI１]/g, '1')
     .replace(/[Ｓ５]/g, '5').replace(/[Ｂ８]/g, '8')
     .replace(/\s+/g, ' ');
+  // 数字と年月日の間のスペースを除去（例：「2026 年 4 月 6 日」→「2026年4月6日」）
+  text = text.replace(/(\d)\s+([年月日])/g, '$1$2');
+  text = text.replace(/([年月])\s+(\d)/g, '$1$2');
+  text = text.replace(/有\s*効\s*期\s*限/g, '有効期限');
   const pats = [
     /(\d{4})[年\/\-．.](\d{1,2})[月\/\-．.](\d{1,2})日?/g,
     /有効期限[：:\s]*(\d{4})[年\/\-](\d{1,2})[月\/\-](\d{1,2})/g,
