@@ -494,50 +494,18 @@ function preprocessForOCR(file) {
 
       const d = ctx.getImageData(0, 0, w, h);
       const src = d.data;
-      const gray = new Uint8Array(w * h);
 
-      // グレースケール化：カラーテキスト(緑・赤・青)を黒として検出するため
-      // 彩度が高いピクセルは強制的に暗くする
+      // グレースケール化：カラーテキスト(緑・赤・青)を暗くして検出しやすくする
       for (let i = 0; i < src.length; i += 4) {
         const r = src[i], g = src[i+1], b = src[i+2];
         const lum = 0.299 * r + 0.587 * g + 0.114 * b;
         const maxC = Math.max(r, g, b), minC = Math.min(r, g, b);
         const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
-        // 彩度が高い（カラーテキスト）かつ明るいピクセルを暗くする
-        const colorBoost = saturation > 0.3 ? saturation * 80 : 0;
-        gray[i >> 2] = Math.max(0, lum - colorBoost);
-      }
-
-      // 適応的しきい値二値化（局所的な明暗に対応）
-      const blockSize = 25;
-      const half = Math.floor(blockSize / 2);
-      const C = 8; // しきい値オフセット
-
-      // 積分画像で高速化
-      const integral = new Float64Array((w + 1) * (h + 1));
-      for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-          integral[(y+1)*(w+1)+(x+1)] =
-            gray[y*w+x]
-            + integral[y*(w+1)+(x+1)]
-            + integral[(y+1)*(w+1)+x]
-            - integral[y*(w+1)+x];
-        }
-      }
-      for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-          const x1 = Math.max(0, x - half), y1 = Math.max(0, y - half);
-          const x2 = Math.min(w - 1, x + half), y2 = Math.min(h - 1, y + half);
-          const area = (x2 - x1 + 1) * (y2 - y1 + 1);
-          const sum = integral[(y2+1)*(w+1)+(x2+1)]
-            - integral[y1*(w+1)+(x2+1)]
-            - integral[(y2+1)*(w+1)+x1]
-            + integral[y1*(w+1)+x1];
-          const mean = sum / area;
-          const val = gray[y*w+x] < mean - C ? 0 : 255;
-          const idx = (y * w + x) * 4;
-          src[idx] = src[idx+1] = src[idx+2] = val;
-        }
+        const colorBoost = saturation > 0.3 ? saturation * 60 : 0;
+        // コントラスト強化（係数2.0）
+        const raw = Math.max(0, lum - colorBoost);
+        const val = Math.min(255, Math.max(0, (raw - 128) * 2.0 + 128));
+        src[i] = src[i+1] = src[i+2] = val;
       }
 
       ctx.putImageData(d, 0, 0);
