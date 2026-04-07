@@ -616,8 +616,13 @@ async function runOCR(imageData) {
       document.getElementById('autoBadge').style.display = 'inline-block';
     } else {
       st.className = 'ocr-status notfound';
-      const preview = r.data.text.trim().slice(0, 120).replace(/</g,'&lt;');
-      st.innerHTML = `📅 日付を読み取れませんでした<br><small style="opacity:.7;word-break:break-all">OCR読取：${preview || '(空)'}</small>`;
+      const rawPreview = r.data.text.trim().slice(0, 100).replace(/</g,'&lt;');
+      // extractDate内と同じ変換を行い、処理後テキストも表示
+      let proc = r.data.text;
+      const cn=[['⑳','20'],['⑲','19'],['⑱','18'],['⑰','17'],['⑯','16'],['⑮','15'],['⑭','14'],['⑬','13'],['⑫','12'],['⑪','11'],['⑩','10'],['⑨','9'],['⑧','8'],['⑦','7'],['⑥','6'],['⑤','5'],['④','4'],['③','3'],['②','2'],['①','1']];
+      for(const[c,n]of cn)proc=proc.replaceAll(c,n);
+      const procPreview = proc.trim().slice(0, 100).replace(/</g,'&lt;');
+      st.innerHTML = `📅 日付を読み取れませんでした<br><small style="opacity:.7;word-break:break-all">生：${rawPreview || '(空)'}<br>変換後：${procPreview}</small>`;
       showManualRow();
     }
   } catch {
