@@ -603,7 +603,8 @@ async function runOCR(imageData) {
       document.getElementById('autoBadge').style.display = 'inline-block';
     } else {
       st.className = 'ocr-status notfound';
-      st.innerHTML = '📅 日付を読み取れませんでした。下から選択してください';
+      const preview = r.data.text.trim().slice(0, 120).replace(/</g,'&lt;');
+      st.innerHTML = `📅 日付を読み取れませんでした<br><small style="opacity:.7;word-break:break-all">OCR読取：${preview || '(空)'}</small>`;
       showManualRow();
     }
   } catch {
