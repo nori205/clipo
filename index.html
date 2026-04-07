@@ -619,13 +619,15 @@ async function runOCR(imageData) {
       document.getElementById('autoBadge').style.display = 'inline-block';
     } else {
       st.className = 'ocr-status notfound';
-      const rawPreview = r.data.text.trim().slice(0, 100).replace(/</g,'&lt;');
-      // extractDate内と同じ変換を行い、処理後テキストも表示
+      // extractDate内と同じ変換を行い詳細デバッグ表示
       let proc = r.data.text;
       const cn=[['⑳','20'],['⑲','19'],['⑱','18'],['⑰','17'],['⑯','16'],['⑮','15'],['⑭','14'],['⑬','13'],['⑫','12'],['⑪','11'],['⑩','10'],['⑨','9'],['⑧','8'],['⑦','7'],['⑥','6'],['⑤','5'],['④','4'],['③','3'],['②','2'],['①','1']];
-      for(const[c,n]of cn)proc=proc.replaceAll(c,n);
-      const procPreview = proc.trim().slice(0, 100).replace(/</g,'&lt;');
-      st.innerHTML = `📅 日付を読み取れませんでした<br><small style="opacity:.7;word-break:break-all">生：${rawPreview || '(空)'}<br>変換後：${procPreview}</small>`;
+      for(const[c,n]of cn)proc=proc.split(c).join(n);
+      const m = proc.match(/(\d{4})[年\/\-．.](\d{1,2})[月\/\-．.](\d{1,2})日?/);
+      const m2 = proc.match(/(\d{1,2})月(\d{1,2})日/);
+      const matchInfo = m ? `✔ yr=${m[1]} mo=${m[2]} dy=${m[3]}` : m2 ? `✔月日のみ mo=${m2[1]} dy=${m2[2]}` : '✘ パターン不一致';
+      const procPreview = proc.replace(/[\s\S]{0,20}(有効期限[\s\S]{0,40})/,'$1').slice(0,80).replace(/</g,'&lt;');
+      st.innerHTML = `📅 日付を読み取れませんでした<br><small style="opacity:.7;word-break:break-all">変換後：${procPreview || proc.slice(0,80).replace(/</g,'&lt;')}<br>判定：${matchInfo}</small>`;
       showManualRow();
     }
   } catch {
