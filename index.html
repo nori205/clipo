@@ -549,7 +549,17 @@ function preprocessForOCR(file) {
 // ════════════════════════════════════════
 function extractDate(text) {
   const today = new Date(); today.setHours(0,0,0,0);
-  // OCRノイズ補正：よくある誤認識を修正
+  // 丸数字を通常の数字に変換（Tesseractが①②③等に誤認識するケース対応）
+  const circledNums = [
+    ['⑳','20'],['⑲','19'],['⑱','18'],['⑰','17'],['⑯','16'],
+    ['⑮','15'],['⑭','14'],['⑬','13'],['⑫','12'],['⑪','11'],
+    ['⑩','10'],['⑨','9'],['⑧','8'],['⑦','7'],['⑥','6'],
+    ['⑤','5'],['④','4'],['③','3'],['②','2'],['①','1'],
+    ['㉚','30'],['㉙','29'],['㉘','28'],['㉗','27'],['㉖','26'],
+    ['㉕','25'],['㉔','24'],['㉓','23'],['㉒','22'],['㉑','21'],
+  ];
+  for (const [c, n] of circledNums) text = text.replaceAll(c, n);
+  // その他OCRノイズ補正
   text = text
     .replace(/[Oo０]/g, '0').replace(/[lI１]/g, '1')
     .replace(/[Ｓ５]/g, '5').replace(/[Ｂ８]/g, '8')
@@ -569,6 +579,8 @@ function extractDate(text) {
       let yr, mo, dy;
       if (m.length === 4) {
         yr = parseInt(m[1]); if (yr < 100) yr += 2000;
+        // 丸数字変換後に年が1000-1999になるケース（例:⑫26→1226）を補正
+        if (yr >= 1000 && yr < 2000) yr += 1000;
         mo = parseInt(m[2]); dy = parseInt(m[3]);
       } else {
         yr = today.getFullYear(); mo = parseInt(m[1]); dy = parseInt(m[2]);
