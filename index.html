@@ -866,7 +866,7 @@ function makeCard(c) {
       </div>
       <div class="card-actions">
         <button class="btn-check${c.used?' checked':''}">✓</button>
-        ${c.used?`<button class="btn-delete">🗑</button>`:''}
+        ${(c.used||isExpired)?`<button class="btn-delete">🗑</button>`:''}
       </div>
     </div>`;
 
