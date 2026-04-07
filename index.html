@@ -580,7 +580,8 @@ function extractDate(text) {
       if (m.length === 4) {
         yr = parseInt(m[1]); if (yr < 100) yr += 2000;
         // 丸数字変換後に年が1000-1999になるケース（例:⑫26→1226）を補正
-        if (yr >= 1000 && yr < 2000) yr += 1000;
+        // 下2桁を20xx年として解釈（1226→2026、1131→2031等）
+        if (yr >= 1000 && yr < 2000) yr = 2000 + (yr % 100);
         mo = parseInt(m[2]); dy = parseInt(m[3]);
       } else {
         yr = today.getFullYear(); mo = parseInt(m[1]); dy = parseInt(m[2]);
