@@ -591,9 +591,10 @@ async function runOCR(imageData) {
   st.innerHTML = '<span class="spinner"></span>期限日を読み取り中…';
   try {
     const r = await Tesseract.recognize(imageData, 'jpn+eng', {
-      tessedit_pageseg_mode: '6',
+      tessedit_pageseg_mode: '11',
       preserve_interword_spaces: '1',
     });
+    console.log('[OCR raw text]', r.data.text);
     const date = extractDate(r.data.text);
     if (date) {
       setDate(date, true);
