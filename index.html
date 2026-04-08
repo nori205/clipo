@@ -452,7 +452,7 @@ function formatDate(d) {
   const x = new Date(d);
   return `${x.getFullYear()}年${x.getMonth()+1}月${x.getDate()}日`;
 }
-function toISO(d) { return d.toISOString().split('T')[0]; }
+function toISO(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function addDays(n) { const d = new Date(); d.setDate(d.getDate()+n); return toISO(d); }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
