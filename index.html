@@ -150,7 +150,16 @@
   .viewer-img-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 80px 0 100px; }
   .viewer-img-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
   .viewer-no-img { color: rgba(255,255,255,0.3); font-size: 60px; }
-  .viewer-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 20px 44px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .viewer-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 20px 44px; background: linear-gradient(to top, rgba(0,0,0,0.85), transparent); display: flex; flex-direction: column; gap: 8px; }
+  .viewer-footer-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .cal-options { display: none; background: rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 12px; }
+  .cal-options.open { display: block; }
+  .cal-options-label { font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 7px; }
+  .cal-options-btns { display: flex; gap: 6px; }
+  .btn-cal-opt { flex: 1; padding: 8px 4px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12); color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'M PLUS Rounded 1c', sans-serif; transition: background 0.15s; }
+  .btn-cal-opt:active { background: rgba(255,255,255,0.3); }
+  .btn-cal-toggle { width: 44px; height: 44px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; }
+  .btn-cal-toggle.active { background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.7); }
   .viewer-expire { font-size: 12px; color: rgba(255,255,255,0.6); }
   .viewer-expire.soon { color: #f4a261; font-weight: 700; }
   .btn-viewer-check { flex: 1; padding: 14px; border-radius: 12px; border: none; background: #2d6a4f; color: #fff; font-size: 15px; font-weight: 700; font-family: 'M PLUS Rounded 1c', sans-serif; cursor: pointer; transition: background 0.15s, transform 0.12s; }
@@ -313,8 +322,21 @@
   </div>
   <div class="viewer-img-wrap" id="viewerImgWrap"></div>
   <div class="viewer-footer">
-    <div class="viewer-expire" id="viewerExpire"></div>
-    <button class="btn-viewer-check" id="viewerCheckBtn">✓ 使用済みにする</button>
+    <div class="cal-options" id="calOptions">
+      <div class="cal-options-label">📅 Googleカレンダーに追加（通知タイミング）</div>
+      <div class="cal-options-btns">
+        <button class="btn-cal-opt" data-days="7">1週間前</button>
+        <button class="btn-cal-opt" data-days="3">3日前</button>
+        <button class="btn-cal-opt" data-days="0">当日</button>
+      </div>
+    </div>
+    <div class="viewer-footer-row">
+      <div class="viewer-expire" id="viewerExpire"></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-cal-toggle" id="viewerCalBtn">📅</button>
+        <button class="btn-viewer-check" id="viewerCheckBtn">✓ 使用済みにする</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -947,6 +969,12 @@ async function openViewer(c) {
     wrap.innerHTML = shopIconHTML(c.shop, 50);
   }
 
+  // calendar button: show only when expire exists
+  const calBtn = document.getElementById('viewerCalBtn');
+  calBtn.style.display = c.expire ? 'flex' : 'none';
+  document.getElementById('calOptions').classList.remove('open');
+  calBtn.classList.remove('active');
+
   document.getElementById('viewer').classList.add('open');
   // Prevent scroll
   document.body.style.overflow = 'hidden';
@@ -962,8 +990,51 @@ function shopEmojiFor(name) {
 function closeViewer() {
   document.getElementById('viewer').classList.remove('open');
   document.body.style.overflow = '';
+  document.getElementById('calOptions').classList.remove('open');
+  document.getElementById('viewerCalBtn').classList.remove('active');
   viewerCouponId = null;
 }
+
+// ════════════════════════════════════════
+// Googleカレンダー連携
+// ════════════════════════════════════════
+function googleCalendarUrl(c, daysBefore) {
+  if (!c.expire) return null;
+  const expireDate = new Date(c.expire);
+  const eventDate = new Date(expireDate);
+  eventDate.setDate(eventDate.getDate() - daysBefore);
+  const dateStr = toISO(eventDate).replace(/-/g, '');
+  const nextDate = new Date(eventDate);
+  nextDate.setDate(nextDate.getDate() + 1);
+  const nextStr = toISO(nextDate).replace(/-/g, '');
+  const shopName = c.shop || 'クーポン';
+  const label = daysBefore === 0 ? '期限当日' : `期限${daysBefore}日前`;
+  const title = encodeURIComponent(`🎫 ${shopName} ${label}`);
+  const details = encodeURIComponent(`Clipoで管理中のクーポンです。\n期限日：${formatDate(c.expire)}\n\nhttps://nori205.github.io/clipo/`);
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateStr}/${nextStr}&details=${details}`;
+}
+
+document.getElementById('viewerCalBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  document.getElementById('calOptions').classList.toggle('open');
+  document.getElementById('viewerCalBtn').classList.toggle('active');
+});
+
+document.querySelectorAll('.btn-cal-opt').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const days = parseInt(btn.dataset.days);
+    const c = coupons.find(x => x.id === viewerCouponId);
+    if (!c) return;
+    const url = googleCalendarUrl(c, days);
+    if (!url) return;
+    window.open(url, '_blank');
+    document.getElementById('calOptions').classList.remove('open');
+    document.getElementById('viewerCalBtn').classList.remove('active');
+    const label = days === 0 ? '当日' : `${days}日前`;
+    showToast(`📅 Googleカレンダーを開きました（${label}）`);
+  });
+});
 
 document.getElementById('viewerClose').addEventListener('click', closeViewer);
 
