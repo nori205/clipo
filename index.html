@@ -1000,8 +1000,9 @@ function closeViewer() {
 // ════════════════════════════════════════
 function googleCalendarUrl(c, daysBefore) {
   if (!c.expire) return null;
-  const expireDate = new Date(c.expire);
-  const eventDate = new Date(expireDate);
+  // YYYY-MM-DD をローカル時間でパース（UTC解釈によるズレ防止）
+  const [y, m, d] = c.expire.split('-').map(Number);
+  const eventDate = new Date(y, m - 1, d);
   eventDate.setDate(eventDate.getDate() - daysBefore);
   const dateStr = toISO(eventDate).replace(/-/g, '');
   const nextDate = new Date(eventDate);
