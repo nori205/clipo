@@ -517,17 +517,38 @@ function preprocessForOCR(file) {
       const d = ctx.getImageData(0, 0, w, h);
       const src = d.data;
 
-      // グレースケール化：カラーテキスト(緑・赤・青)を暗くして検出しやすくする
+      // Pass1: 通常の前処理結果を計算しながら平均輝度を取得
+      const greyVals = new Uint8Array(src.length >> 2);
+      let totalGrey = 0;
       for (let i = 0; i < src.length; i += 4) {
         const r = src[i], g = src[i+1], b = src[i+2];
         const lum = 0.299 * r + 0.587 * g + 0.114 * b;
         const maxC = Math.max(r, g, b), minC = Math.min(r, g, b);
         const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
         const colorBoost = saturation > 0.3 ? saturation * 60 : 0;
-        // コントラスト強化（係数2.0）
         const raw = Math.max(0, lum - colorBoost);
         const val = Math.min(255, Math.max(0, (raw - 128) * 2.0 + 128));
-        src[i] = src[i+1] = src[i+2] = val;
+        greyVals[i >> 2] = val;
+        totalGrey += val;
+      }
+      const avgGrey = totalGrey / (src.length >> 2);
+
+      if (avgGrey >= 100) {
+        // 明るい背景：通常の前処理結果を適用
+        for (let i = 0; i < src.length; i += 4) {
+          src[i] = src[i+1] = src[i+2] = greyVals[i >> 2];
+        }
+      } else {
+        // 暗い背景（緑・赤テキスト on 濃色背景 など）：彩度ベースで分類
+        // 彩度が高い or 輝度が高い → テキスト（暗く）、それ以外 → 背景（明るく）
+        for (let i = 0; i < src.length; i += 4) {
+          const r = src[i], g = src[i+1], b = src[i+2];
+          const maxC = Math.max(r, g, b), minC = Math.min(r, g, b);
+          const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
+          const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+          const isText = (saturation > 0.4 && lum > 40) || lum > 180;
+          src[i] = src[i+1] = src[i+2] = isText ? 20 : 230;
+        }
       }
 
       ctx.putImageData(d, 0, 0);
