@@ -179,6 +179,10 @@
   .expiry-alert-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
   .expiry-alert-list li { font-size: 12px; color: var(--text); }
 
+  .cal-link-btns { display: flex; gap: 6px; }
+  .btn-cal-link { flex: 1; padding: 10px 4px; border-radius: var(--radius-sm); border: 1.5px solid var(--accent-mid); background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'M PLUS Rounded 1c', sans-serif; transition: all 0.15s; }
+  .btn-cal-link:active { background: var(--accent); color: #fff; }
+
   .loading-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999; flex-direction: column; gap: 12px; }
   .loading-screen.hidden { display: none; }
   .loading-title { font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 24px; font-weight: 700; }
@@ -272,6 +276,16 @@
       <div class="manual-row" id="manualRow">
         <input class="form-input" id="expireInput" type="date">
       </div>
+    </div>
+
+    <div class="form-group" id="calLinkGroup" style="display:none;">
+      <label class="form-label">📅 Googleカレンダーに追加（任意）</label>
+      <div class="cal-link-btns">
+        <button class="btn-cal-link" type="button" data-days="7">1週間前</button>
+        <button class="btn-cal-link" type="button" data-days="3">3日前</button>
+        <button class="btn-cal-link" type="button" data-days="0">当日</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">タップするとGoogleカレンダーが開きます。保存は別途「保存する」を押してください。</div>
     </div>
 
     <button class="btn-save" id="saveBtn">保存する</button>
@@ -658,6 +672,7 @@ function setDate(dateStr, fromOCR=false) {
   });
   document.getElementById('expireInput').value = dateStr;
   if (!fromOCR) document.getElementById('autoBadge').style.display = 'none';
+  document.getElementById('calLinkGroup').style.display = dateStr ? 'block' : 'none';
 }
 
 document.querySelectorAll('.qd-btn').forEach(b => {
@@ -845,6 +860,7 @@ function resetModal() {
   document.getElementById('expireInput').value = '';
   document.querySelectorAll('.qd-btn').forEach(b => b.classList.remove('selected'));
   currentImgData = null; selectedDate = null; selectedShop = null; isOtherShop = false;
+  document.getElementById('calLinkGroup').style.display = 'none';
 }
 
 // ════════════════════════════════════════
@@ -1040,6 +1056,26 @@ document.getElementById('viewerCalBtn').addEventListener('click', e => {
   e.stopPropagation();
   document.getElementById('calOptions').classList.toggle('open');
   document.getElementById('viewerCalBtn').classList.toggle('active');
+});
+
+document.querySelectorAll('.btn-cal-link').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!selectedDate) return;
+    const days = parseInt(btn.dataset.days);
+    const [y, m, d] = selectedDate.split('-').map(Number);
+    const eventDate = new Date(y, m - 1, d);
+    eventDate.setDate(eventDate.getDate() - days);
+    const dateStr = toISO(eventDate).replace(/-/g, '');
+    const nextDate = new Date(eventDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    const nextStr = toISO(nextDate).replace(/-/g, '');
+    const shopName = selectedShop || 'クーポン';
+    const label = days === 0 ? '期限当日' : `期限${days}日前`;
+    const title = encodeURIComponent(`🎫 ${shopName} ${label}`);
+    const details = encodeURIComponent(`Clipoで管理中のクーポンです。\n期限日：${formatDate(selectedDate)}\n\nhttps://nori205.github.io/clipo/`);
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateStr}/${nextStr}&details=${details}`;
+    window.open(url, '_blank');
+  });
 });
 
 document.querySelectorAll('.btn-cal-opt').forEach(btn => {
