@@ -64,6 +64,9 @@
   .btn-check.checked { background: var(--accent); border-color: var(--accent); color: #fff; }
   .btn-delete { width: 28px; height: 28px; border-radius: 50%; border: none; background: transparent; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-light); transition: color 0.15s, background 0.15s; }
   .btn-delete:active { color: var(--warn); background: var(--warn-light); }
+  .btn-edit { width: 28px; height: 28px; border-radius: 50%; border: none; background: transparent; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-light); transition: color 0.15s, background 0.15s; }
+  .btn-edit:active { color: var(--accent); background: var(--accent-light); }
+  .card-amount { font-size: 11px; color: var(--accent); font-weight: 700; margin-top: 1px; }
   .expiry-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-left: 5px; vertical-align: middle; }
   .badge-soon { background: var(--warn-light); color: var(--warn); }
   .badge-expired { background: #fee; color: #c0392b; }
@@ -123,8 +126,8 @@
   .form-label-row .form-label { margin-bottom: 0; }
   .auto-badge { font-size: 10px; background: var(--accent-light); color: var(--accent); padding: 2px 8px; border-radius: 10px; font-weight: 700; display: none; }
   .quick-dates { display: flex; gap: 6px; flex-wrap: wrap; }
-  .qd-btn { flex: 1; min-width: 60px; padding: 9px 4px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--bg); font-size: 11px; font-family: 'M PLUS Rounded 1c', sans-serif; font-weight: 500; color: var(--text-muted); cursor: pointer; text-align: center; transition: all 0.15s; }
-  .qd-btn.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .qd-btn, .eqd-btn { flex: 1; min-width: 60px; padding: 9px 4px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--bg); font-size: 11px; font-family: 'M PLUS Rounded 1c', sans-serif; font-weight: 500; color: var(--text-muted); cursor: pointer; text-align: center; transition: all 0.15s; }
+  .qd-btn.selected, .eqd-btn.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
   .manual-toggle { font-size: 11px; color: var(--accent-mid); text-decoration: underline; cursor: pointer; margin-top: 6px; display: inline-block; }
   .manual-row { display: none; margin-top: 8px; }
   .manual-row.visible { display: block; }
@@ -143,14 +146,16 @@
   /* Fullscreen viewer */
   .viewer { position: fixed; inset: 0; background: #000; z-index: 600; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.22s; }
   .viewer.open { opacity: 1; pointer-events: all; }
-  .viewer-header { display: flex; align-items: center; justify-content: space-between; padding: 52px 18px 12px; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); position: absolute; top: 0; left: 0; right: 0; z-index: 2; }
+  .viewer-header { display: flex; align-items: center; justify-content: space-between; padding: 52px 18px 12px; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); position: absolute; top: 0; left: 0; right: 0; z-index: 2; transition: opacity 0.25s; }
+  .viewer.immersive .viewer-header { opacity: 0; pointer-events: none; }
   .viewer-shop { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.7); }
   .viewer-name { font-size: 15px; font-weight: 500; color: #fff; margin-top: 2px; }
   .viewer-close { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .viewer-img-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 80px 0 100px; }
   .viewer-img-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
   .viewer-no-img { color: rgba(255,255,255,0.3); font-size: 60px; }
-  .viewer-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 20px 44px; background: linear-gradient(to top, rgba(0,0,0,0.85), transparent); display: flex; flex-direction: column; gap: 8px; }
+  .viewer-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 20px 44px; background: linear-gradient(to top, rgba(0,0,0,0.85), transparent); display: flex; flex-direction: column; gap: 8px; transition: opacity 0.25s; }
+  .viewer.immersive .viewer-footer { opacity: 0; pointer-events: none; }
   .viewer-footer-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .cal-options { display: none; background: rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 12px; }
   .cal-options.open { display: block; }
@@ -278,14 +283,9 @@
       </div>
     </div>
 
-    <div class="form-group" id="calLinkGroup" style="display:none;">
-      <label class="form-label">📅 Googleカレンダーに追加（任意）</label>
-      <div class="cal-link-btns">
-        <button class="btn-cal-link" type="button" data-days="7">1週間前</button>
-        <button class="btn-cal-link" type="button" data-days="3">3日前</button>
-        <button class="btn-cal-link" type="button" data-days="0">当日</button>
-      </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">タップするとGoogleカレンダーが開きます。保存は別途「保存する」を押してください。</div>
+    <div class="form-group">
+      <label class="form-label">💴 金額・割引（任意）</label>
+      <input class="form-input" id="amountInput" type="text" placeholder="例：500円引き、20%OFF">
     </div>
 
     <button class="btn-save" id="saveBtn">保存する</button>
@@ -323,6 +323,51 @@
 
 
 
+<!-- Cal After Save Modal -->
+<div class="modal-overlay" id="calAfterSaveModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📅 Googleカレンダーに追加</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">通知タイミングを選んでください（任意）</div>
+    <div class="cal-link-btns">
+      <button class="btn-cal-link" id="calAfter7">1週間前</button>
+      <button class="btn-cal-link" id="calAfter3">3日前</button>
+      <button class="btn-cal-link" id="calAfter0">当日</button>
+    </div>
+    <button class="btn-save" style="background:transparent;color:var(--text-muted);margin-top:12px;" id="calAfterSkip">スキップ</button>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">クーポンを編集</div>
+
+    <div class="form-group">
+      <label class="form-label">💴 金額・割引</label>
+      <input class="form-input" id="editAmountInput" type="text" placeholder="例：500円引き、20%OFF">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">📅 有効期限</label>
+      <div class="quick-dates">
+        <button class="eqd-btn" data-days="7">1週間後</button>
+        <button class="eqd-btn" data-days="14">2週間後</button>
+        <button class="eqd-btn" data-days="30">1ヶ月後</button>
+        <button class="eqd-btn" data-days="60">2ヶ月後</button>
+        <button class="eqd-btn" data-days="90">3ヶ月後</button>
+      </div>
+      <div style="margin-top:8px;">
+        <input class="form-input" id="editExpireInput" type="date">
+      </div>
+    </div>
+
+    <button class="btn-save" id="editSaveBtn">保存する</button>
+    <button class="btn-save" style="background:transparent;color:var(--text-muted);margin-top:8px;" id="editCancelBtn">キャンセル</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- Fullscreen Viewer -->
@@ -331,8 +376,12 @@
     <div>
       <div class="viewer-shop" id="viewerShop"></div>
       <div class="viewer-name" id="viewerName"></div>
+      <div id="viewerAmount" style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:3px;"></div>
     </div>
-    <button class="viewer-close" id="viewerClose">✕</button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="viewer-close" id="viewerEditBtn" style="font-size:16px;" title="編集">✏️</button>
+      <button class="viewer-close" id="viewerClose">✕</button>
+    </div>
   </div>
   <div class="viewer-img-wrap" id="viewerImgWrap"></div>
   <div class="viewer-footer">
@@ -446,6 +495,7 @@ function shopEmoji(name) {
 
 let coupons = [];   // metadata only (no img)
 let currentFilter = 'all';
+let calAfterSaveCoupon = null;
 let currentImgData = null;  // compressed base64
 let selectedDate = null;
 let selectedShop = null;
@@ -672,7 +722,6 @@ function setDate(dateStr, fromOCR=false) {
   });
   document.getElementById('expireInput').value = dateStr;
   if (!fromOCR) document.getElementById('autoBadge').style.display = 'none';
-  document.getElementById('calLinkGroup').style.display = dateStr ? 'block' : 'none';
 }
 
 document.querySelectorAll('.qd-btn').forEach(b => {
@@ -836,7 +885,8 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   if (!currentImgData && !shop) { showToast('お店か画像を選択してください'); return; }
 
   const expire = selectedDate || document.getElementById('expireInput').value || null;
-  const coupon = { id: Date.now().toString(), shop, name, expire, hasImg: !!currentImgData, used: false, createdAt: new Date().toISOString() };
+  const amount = document.getElementById('amountInput').value.trim() || null;
+  const coupon = { id: Date.now().toString(), shop, name, expire, amount, hasImg: !!currentImgData, used: false, createdAt: new Date().toISOString() };
 
   await saveCoupon(coupon, currentImgData);
   coupons.unshift(coupon);
@@ -844,7 +894,12 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
 
   resetModal();
   document.getElementById('addModal').classList.remove('open');
-  showToast('🎫 クーポンを追加しました');
+  if (expire) {
+    calAfterSaveCoupon = coupon;
+    document.getElementById('calAfterSaveModal').classList.add('open');
+  } else {
+    showToast('🎫 クーポンを追加しました');
+  }
 });
 
 function resetModal() {
@@ -858,9 +913,9 @@ function resetModal() {
   document.getElementById('manualRow').classList.remove('visible');
   document.getElementById('manualToggle').style.display = 'inline-block';
   document.getElementById('expireInput').value = '';
+  document.getElementById('amountInput').value = '';
   document.querySelectorAll('.qd-btn').forEach(b => b.classList.remove('selected'));
   currentImgData = null; selectedDate = null; selectedShop = null; isOtherShop = false;
-  document.getElementById('calLinkGroup').style.display = 'none';
 }
 
 // ════════════════════════════════════════
@@ -922,9 +977,11 @@ function makeCard(c) {
         ${c.shop?`<div class="card-shop">${esc(c.shop)}</div>`:''}
         <div class="card-name">${esc(c.name||'クーポン')}${badge}</div>
         ${expText?`<div class="card-expire ${expClass}">${expText}</div>`:''}
+        ${c.amount?`<div class="card-amount">💴 ${esc(c.amount)}</div>`:''}
       </div>
       <div class="card-actions">
         <button class="btn-check${c.used?' checked':''}">✓</button>
+        <button class="btn-edit">✏️</button>
         ${(c.used||isExpired)?`<button class="btn-delete">🗑</button>`:''}
       </div>
     </div>`;
@@ -961,6 +1018,10 @@ function makeCard(c) {
       showToast('🗑 削除しました');
     }
   });
+  card.querySelector('.btn-edit').addEventListener('click', e => {
+    e.stopPropagation();
+    openEditModal(c);
+  });
   return card;
 }
 
@@ -973,6 +1034,7 @@ async function openViewer(c) {
   viewerCouponId = c.id;
   document.getElementById('viewerShop').textContent = c.shop || '';
   document.getElementById('viewerName').textContent = c.name || 'クーポン';
+  document.getElementById('viewerAmount').textContent = c.amount ? `💴 ${c.amount}` : '';
 
   // expire text
   const days = daysUntil(c.expire);
@@ -1025,12 +1087,18 @@ function shopEmojiFor(name) {
 }
 
 function closeViewer() {
-  document.getElementById('viewer').classList.remove('open');
+  const viewer = document.getElementById('viewer');
+  viewer.classList.remove('open');
+  viewer.classList.remove('immersive');
   document.body.style.overflow = '';
   document.getElementById('calOptions').classList.remove('open');
   document.getElementById('viewerCalBtn').classList.remove('active');
   viewerCouponId = null;
 }
+
+document.getElementById('viewerImgWrap').addEventListener('click', () => {
+  document.getElementById('viewer').classList.toggle('immersive');
+});
 
 // ════════════════════════════════════════
 // Googleカレンダー連携
@@ -1058,24 +1126,24 @@ document.getElementById('viewerCalBtn').addEventListener('click', e => {
   document.getElementById('viewerCalBtn').classList.toggle('active');
 });
 
-document.querySelectorAll('.btn-cal-link').forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (!selectedDate) return;
-    const days = parseInt(btn.dataset.days);
-    const [y, m, d] = selectedDate.split('-').map(Number);
-    const eventDate = new Date(y, m - 1, d);
-    eventDate.setDate(eventDate.getDate() - days);
-    const dateStr = toISO(eventDate).replace(/-/g, '');
-    const nextDate = new Date(eventDate);
-    nextDate.setDate(nextDate.getDate() + 1);
-    const nextStr = toISO(nextDate).replace(/-/g, '');
-    const shopName = selectedShop || 'クーポン';
-    const label = days === 0 ? '期限当日' : `期限${days}日前`;
-    const title = encodeURIComponent(`🎫 ${shopName} ${label}`);
-    const details = encodeURIComponent(`Clipoで管理中のクーポンです。\n期限日：${formatDate(selectedDate)}\n\nhttps://nori205.github.io/clipo/`);
-    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateStr}/${nextStr}&details=${details}`;
-    window.open(url, '_blank');
+// ════════════════════════════════════════
+// 保存後カレンダーモーダル
+// ════════════════════════════════════════
+[{id:'calAfter7',days:7},{id:'calAfter3',days:3},{id:'calAfter0',days:0}].forEach(({id, days}) => {
+  document.getElementById(id).addEventListener('click', () => {
+    if (!calAfterSaveCoupon) return;
+    const url = googleCalendarUrl(calAfterSaveCoupon, days);
+    if (url) window.open(url, '_blank');
+    document.getElementById('calAfterSaveModal').classList.remove('open');
+    showToast('🎫 クーポンを追加しました');
+    calAfterSaveCoupon = null;
   });
+});
+
+document.getElementById('calAfterSkip').addEventListener('click', () => {
+  document.getElementById('calAfterSaveModal').classList.remove('open');
+  showToast('🎫 クーポンを追加しました');
+  calAfterSaveCoupon = null;
 });
 
 document.querySelectorAll('.btn-cal-opt').forEach(btn => {
@@ -1095,6 +1163,10 @@ document.querySelectorAll('.btn-cal-opt').forEach(btn => {
 });
 
 document.getElementById('viewerClose').addEventListener('click', closeViewer);
+document.getElementById('viewerEditBtn').addEventListener('click', () => {
+  const c = coupons.find(x => x.id === viewerCouponId);
+  if (c) { closeViewer(); openEditModal(c); }
+});
 
 document.getElementById('viewerCheckBtn').addEventListener('click', async () => {
   const i = coupons.findIndex(x => x.id === viewerCouponId);
@@ -1119,6 +1191,60 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
 
 document.getElementById('addBtn').addEventListener('click', () => document.getElementById('addModal').classList.add('open'));
 document.getElementById('addModal').addEventListener('click', e => { if (e.target===document.getElementById('addModal')) { resetModal(); document.getElementById('addModal').classList.remove('open'); }});
+
+// ════════════════════════════════════════
+// 編集モーダル
+// ════════════════════════════════════════
+let editCouponId = null;
+let editSelectedDate = null;
+
+function openEditModal(c) {
+  editCouponId = c.id;
+  editSelectedDate = c.expire || null;
+  document.getElementById('editAmountInput').value = c.amount || '';
+  document.getElementById('editExpireInput').value = c.expire || '';
+  document.querySelectorAll('.eqd-btn').forEach(b => {
+    b.classList.toggle('selected', !!c.expire && addDays(parseInt(b.dataset.days)) === c.expire);
+  });
+  document.getElementById('editModal').classList.add('open');
+}
+
+document.querySelectorAll('.eqd-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    const d = addDays(parseInt(b.dataset.days));
+    editSelectedDate = d;
+    document.getElementById('editExpireInput').value = d;
+    document.querySelectorAll('.eqd-btn').forEach(x => x.classList.remove('selected'));
+    b.classList.add('selected');
+  });
+});
+
+document.getElementById('editExpireInput').addEventListener('change', e => {
+  if (e.target.value) {
+    editSelectedDate = e.target.value;
+    document.querySelectorAll('.eqd-btn').forEach(b => b.classList.remove('selected'));
+  }
+});
+
+document.getElementById('editSaveBtn').addEventListener('click', async () => {
+  const i = coupons.findIndex(x => x.id === editCouponId);
+  if (i === -1) return;
+  const amount = document.getElementById('editAmountInput').value.trim() || null;
+  const expire = editSelectedDate || document.getElementById('editExpireInput').value || coupons[i].expire || null;
+  coupons[i].amount = amount;
+  coupons[i].expire = expire;
+  await dbPut(STORE_META, coupons[i]);
+  render();
+  document.getElementById('editModal').classList.remove('open');
+  showToast('✏️ 編集しました');
+});
+
+document.getElementById('editCancelBtn').addEventListener('click', () => {
+  document.getElementById('editModal').classList.remove('open');
+});
+document.getElementById('editModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('editModal')) document.getElementById('editModal').classList.remove('open');
+});
 
 // ════════════════════════════════════════
 // バックアップ・復元
